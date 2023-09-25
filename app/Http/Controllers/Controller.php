@@ -42,4 +42,8 @@ class Controller extends BaseController
         );
     }
 
+    protected function createdResponse($data): JsonResponse {
+        return new JsonResponse($data, JsonResponse::HTTP_CREATED);
+    }
+
 }

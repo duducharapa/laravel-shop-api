@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 
@@ -26,5 +27,14 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    /**
+     * Throws an 403 HTTP code to Authentication exceptions
+     */
+    public function render($request, Throwable $ex) {
+        if ($ex instanceof AuthenticationException) {
+            return response()->json(['error' => 'User not authenticated!'], 403);
+        }
     }
 }
