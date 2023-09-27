@@ -2,91 +2,69 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\JsonResponse;
+use App\Http\Repositories\ProductRepository;
+use App\Http\Requests\CreateProductRequest;
+use App\Http\Resources\ProductResource;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
     private $NOT_FOUND_MESSAGE = "Não foi possível identificar um produto com esse identificador";
 
+    public function __construct(
+        protected ProductRepository $products
+    )
+    {}
+
     /**
      * Lists all products stored.
      */
-    public function index(): Collection {
-        return Product::all();
+    public function index() {
+        $productsFound = $this->products->findAll();
+
+        return ProductResource::collection($productsFound);
     }
 
     /**
-     * Saves a new product on database.
+     * Saves a new product on application.
+     * 
+     * @param CreateProductRequest $request Validated product creation request.
      */
-    public function store(Request $request): JsonResponse {
-        try {
-            $request->validate([
-                'name' => ['bail', 'required', 'string', 'max:50'],
-                'description' => ['bail', 'nullable', 'string', 'max:255'],
-                'price' => ['bail', 'required', 'decimal:0,2', 'numeric']
-            ]);
-        } catch (ValidationException $ex) {
-            return $this->badRequestResponse($ex->getMessage());
-        }
-        
+    public function store(CreateProductRequest $request): ProductResource {
         $input = $request->only(['name', 'description', 'price']);
-        $newProduct = new Product($input);
-        $saved = $newProduct->save();
+        $product = $this->products->create($input);
 
-        return $saved ?
-            response()->json($newProduct) :
-            $this->internalErrorResponse();
+        return new ProductResource($product);
     }
 
     /**
-     * Searches an product instance by given identifier.
+     * Searches an existent product.
+     * 
+     * @param int $id Product identifier.
      */
-    public function show(int $id): JsonResponse {
-        $productFound = Product::find($id);
+    public function show(int $id): ProductResource {
+        $productFound = $this->products->find($id);
         
-        return $productFound != null ?
-            response()->json($productFound) :
-            $this->notFoundResponse($this->NOT_FOUND_MESSAGE);
+        return new ProductResource($productFound);
     }
 
     /**
      * Update the data about a specific product instance.
      */
-    public function update(int $id, Request $request): JsonResponse {
-        $newQuantity = $request->integer('quantity');
-        $productFound = Product::find($id);
-
-        if ($productFound == null) {
-            return $this->notFoundResponse($this->NOT_FOUND_MESSAGE);
-        }
-
-        $productFound->quantity = $newQuantity;
-        $updated = $productFound->save();
-
-        return $updated ?
-            $this->noContentResponse() :
-            $this->internalErrorResponse();
+    public function update(int $id, Request $request): void {
+        $input = $request->only(['quantity']);
+        
+        $productFound = $this->products->find($id);
+        $this->products->update($productFound, $input);
     }
 
     /**
-     * Removes an instance of product identified by given id.
+     * Removes an existent product instance.
+     * 
+     * @param int $id The product identifier.
      */
-    public function destroy(int $id): JsonResponse {
-        $productFound = Product::find($id);
-
-        if ($productFound == null) {
-            return $this->notFoundResponse($this->NOT_FOUND_MESSAGE);
-        }
-
-        $deleted = Product::destroy($id);
-
-        return $deleted > 0 ?
-            $this->noContentResponse() :
-            $this->notFoundResponse($this->NOT_FOUND_MESSAGE);
+    public function destroy(int $id): void {
+        $this->products->delete($id);
     }
 
 }

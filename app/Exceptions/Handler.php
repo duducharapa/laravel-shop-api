@@ -28,13 +28,4 @@ class Handler extends ExceptionHandler
             //
         });
     }
-
-    /**
-     * Throws an 403 HTTP code to Authentication exceptions
-     */
-    public function render($request, Throwable $ex) {
-        if ($ex instanceof AuthenticationException) {
-            return response()->json(['error' => 'User not authenticated!'], 403);
-        }
-    }
 }

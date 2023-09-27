@@ -2,35 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use App\Http\Repositories\UserRepository;
+use App\Http\Requests\CreateUserRequest;
+use App\Http\Resources\UserResource;
 
 class UserController extends Controller
 {
-    
+ 
+    public function __construct(
+        protected UserRepository $users,
+    ) {}
+
     /**
+     * Register an user on application.
      * 
+     * @param CreateUserRequest $request Validated user creation request.
      */
-    public function register(Request $request): JsonResponse {
-        try {
-            $request->validate([
-                'name' => ['bail', 'required', 'string', 'max:50'],
-                'password' => ['bail', 'required', 'string', 'max:64'],
-                'email' => ['bail', 'required', 'string', 'email']
-            ]);
-        } catch (ValidationException $ex) {
-            return $this->badRequestResponse($ex->getMessage());
-        }
-
+    public function store(CreateUserRequest $request): UserResource {
         $input = $request->only(['name', 'password', 'email']);
-        $createdUser = new User($input);
-        $saved = $createdUser->save();
+        $createdUser = $this->users->create($input);
 
-        return $saved ?
-            $this->createdResponse($createdUser) :
-            $this->internalErrorResponse();
+        return new UserResource($createdUser);
     }
-
 }

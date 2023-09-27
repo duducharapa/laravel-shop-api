@@ -46,4 +46,11 @@ class Controller extends BaseController
         return new JsonResponse($data, JsonResponse::HTTP_CREATED);
     }
 
+    protected function unprocessableResponse($message): JsonResponse {
+        return new JsonResponse(
+            ['error' => $message],
+            JsonResponse::HTTP_UNPROCESSABLE_ENTITY
+        );
+    }
+
 }

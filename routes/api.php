@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
@@ -22,5 +23,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::middleware('auth:sanctum')->apiResource('products', ProductController::class);
+
+Route::middleware('auth:sanctum')->prefix('cart')->controller(CartController::class)->group(function () {
+    Route::get('/', 'index');
+
+    Route::prefix('items')->group(function () {
+        Route::post('/', 'create');
+        Route::patch('/{id}', 'update');
+        Route::delete('/{id}', 'destroy');
+    });
+});
+
 Route::post('login', [LoginController::class, 'authenticate'])->name('login');
-Route::post('users', [UserController::class, 'register']);
+Route::post('users', [UserController::class, 'store']);

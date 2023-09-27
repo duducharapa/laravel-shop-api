@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -42,4 +43,27 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function getId() {
+        return $this->attributes->id;
+    }
+
+    /**
+     * 
+     */
+    public function cart(): HasOne {
+        return $this->hasOne(Cart::class);
+    }
+
+    public function save(array $options = []): bool {
+        $saved = parent::save();
+
+        if ($this->cart == null) {
+            $ownerCart = new Cart(['user_id' => $this->id]);
+
+            $this->cart()->save($ownerCart);
+        }
+
+        return $saved;
+    }
 }
